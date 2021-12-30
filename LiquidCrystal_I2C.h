@@ -48,14 +48,14 @@
 #define LCD_BACKLIGHT 0x08
 #define LCD_NOBACKLIGHT 0x00
 
-#define En B00000100  // Enable bit
-#define Rw B00000010  // Read/Write bit
-#define Rs B00000001  // Register select bit
+#define En 0b00000100  // Enable bit
+#define Rw 0b00000010  // Read/Write bit
+#define Rs 0b00000001  // Register select bit
 
 class LiquidCrystal_I2C : public Print {
 public:
-  LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows);
-  void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS );
+  LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows,TwoWire *wire = &Wire);
+  void begin(uint8_t cols, uint8_t rows,TwoWire *wire = &Wire, uint8_t charsize = LCD_5x8DOTS);
   void clear();
   void home();
   void noDisplay();
@@ -77,9 +77,6 @@ public:
   void autoscroll();
   void noAutoscroll(); 
   void createChar(uint8_t, uint8_t[]);
-  void createChar(uint8_t location, const char *charmap);
-  // Example: 	const char bell[8] PROGMEM = {B00100,B01110,B01110,B01110,B11111,B00000,B00100,B00000};
-  
   void setCursor(uint8_t, uint8_t); 
 #if defined(ARDUINO) && ARDUINO >= 100
   virtual size_t write(uint8_t);
@@ -88,7 +85,6 @@ public:
 #endif
   void command(uint8_t);
   void init();
-  void oled_init();
 
 ////compatibility API function aliases
 void blink_on();						// alias for blink()
@@ -122,9 +118,9 @@ private:
   uint8_t _displaycontrol;
   uint8_t _displaymode;
   uint8_t _numlines;
-  bool _oled = false;
   uint8_t _cols;
   uint8_t _rows;
+  TwoWire *_wire;
   uint8_t _backlightval;
 };
 

@@ -6,7 +6,7 @@
 
 #include "Arduino.h"
 
-#define printIIC(args)	Wire.write(args)
+#define printIIC(args)	_wire->write(args)
 inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 	send(value, Rs);
 	return 1;
@@ -15,7 +15,7 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 #else
 #include "WProgram.h"
 
-#define printIIC(args)	Wire.send(args)
+#define printIIC(args)	_wire->send(args)
 inline void LiquidCrystal_I2C::write(uint8_t value) {
 	send(value, Rs);
 }
@@ -44,17 +44,13 @@ inline void LiquidCrystal_I2C::write(uint8_t value) {
 // can't assume that its in that state when a sketch starts (and the
 // LiquidCrystal constructor is called).
 
-LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
+LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows,TwoWire *wire)
 {
   _Addr = lcd_Addr;
   _cols = lcd_cols;
   _rows = lcd_rows;
+  _wire = wire;
   _backlightval = LCD_NOBACKLIGHT;
-}
-
-void LiquidCrystal_I2C::oled_init(){
-  _oled = true;
-	init_priv();
 }
 
 void LiquidCrystal_I2C::init(){
@@ -63,16 +59,17 @@ void LiquidCrystal_I2C::init(){
 
 void LiquidCrystal_I2C::init_priv()
 {
-	Wire.begin();
+	_wire->begin();
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	begin(_cols, _rows);  
+	begin(_cols, _rows,_wire);  
 }
 
-void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
+void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines,TwoWire *wire, uint8_t dotsize) {
 	if (lines > 1) {
 		_displayfunction |= LCD_2LINE;
 	}
 	_numlines = lines;
+	_wire = wire;
 
 	// for some 1 line displays you can select a 10 pixel high font
 	if ((dotsize != 0) && (lines == 1)) {
@@ -132,7 +129,6 @@ void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 void LiquidCrystal_I2C::clear(){
 	command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
 	delayMicroseconds(2000);  // this command takes a long time!
-  if (_oled) setCursor(0,0);
 }
 
 void LiquidCrystal_I2C::home(){
@@ -220,15 +216,6 @@ void LiquidCrystal_I2C::createChar(uint8_t location, uint8_t charmap[]) {
 	}
 }
 
-//createChar with PROGMEM input
-void LiquidCrystal_I2C::createChar(uint8_t location, const char *charmap) {
-	location &= 0x7; // we only have 8 locations 0-7
-	command(LCD_SETCGRAMADDR | (location << 3));
-	for (int i=0; i<8; i++) {
-	    	write(pgm_read_byte_near(charmap++));
-	}
-}
-
 // Turn the (optional) backlight off/on
 void LiquidCrystal_I2C::noBacklight(void) {
 	_backlightval=LCD_NOBACKLIGHT;
@@ -265,9 +252,9 @@ void LiquidCrystal_I2C::write4bits(uint8_t value) {
 }
 
 void LiquidCrystal_I2C::expanderWrite(uint8_t _data){                                        
-	Wire.beginTransmission(_Addr);
+	_wire->beginTransmission(_Addr);
 	printIIC((int)(_data) | _backlightval);
-	Wire.endTransmission();   
+	_wire->endTransmission();   
 }
 
 void LiquidCrystal_I2C::pulseEnable(uint8_t _data){
@@ -317,8 +304,6 @@ void LiquidCrystal_I2C::printstr(const char c[]){
 
 
 // unsupported API functions
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void LiquidCrystal_I2C::off(){}
 void LiquidCrystal_I2C::on(){}
 void LiquidCrystal_I2C::setDelay (int cmdDelay,int charDelay) {}
@@ -328,5 +313,5 @@ uint8_t LiquidCrystal_I2C::init_bargraph(uint8_t graphtype){return 0;}
 void LiquidCrystal_I2C::draw_horizontal_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_col_end){}
 void LiquidCrystal_I2C::draw_vertical_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_row_end){}
 void LiquidCrystal_I2C::setContrast(uint8_t new_val){}
-#pragma GCC diagnostic pop
+
 	

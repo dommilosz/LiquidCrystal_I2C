@@ -78,6 +78,7 @@ public:
   void noAutoscroll(); 
   void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t); 
+  void setLogger(bool enabled,Stream *stream);
 #if defined(ARDUINO) && ARDUINO >= 100
   virtual size_t write(uint8_t);
 #else
@@ -122,6 +123,8 @@ private:
   uint8_t _rows;
   TwoWire *_wire;
   uint8_t _backlightval;
+  bool logger;
+  Stream *logger_stream;
 };
 
 #endif

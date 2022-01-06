@@ -9,6 +9,13 @@
 #define printIIC(args)	_wire->write(args)
 inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 	send(value, Rs);
+	
+	if(logger){
+		logger_stream->print("#LCD: write=");
+		logger_stream->print(value);
+		logger_stream->print(";\n");
+	}
+	
 	return 1;
 }
 
@@ -18,6 +25,11 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 #define printIIC(args)	_wire->send(args)
 inline void LiquidCrystal_I2C::write(uint8_t value) {
 	send(value, Rs);
+	if(logger){
+		logger_stream->print("#LCD: write=");
+		logger_stream->print(value);
+		logger_stream->print(";\n");
+	}
 }
 
 #endif
@@ -129,6 +141,10 @@ void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines,TwoWire *wire, uint8_t
 void LiquidCrystal_I2C::clear(){
 	command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
 	delayMicroseconds(2000);  // this command takes a long time!
+	
+	if(logger){
+		logger_stream->print("#LCD: clear;\n");
+	}
 }
 
 void LiquidCrystal_I2C::home(){
@@ -142,6 +158,16 @@ void LiquidCrystal_I2C::setCursor(uint8_t col, uint8_t row){
 		row = _numlines-1;    // we count rows starting w/0
 	}
 	command(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+	
+	if(logger){
+		logger_stream->print("#LCD: setCursor");
+		logger_stream->print("=");
+		logger_stream->print(col);
+		logger_stream->print(",");
+		logger_stream->print(row);
+		logger_stream->print(";\n");
+		
+	}
 }
 
 // Turn the display on/off (quickly)
@@ -214,6 +240,8 @@ void LiquidCrystal_I2C::createChar(uint8_t location, uint8_t charmap[]) {
 	for (int i=0; i<8; i++) {
 		write(charmap[i]);
 	}
+	
+	
 }
 
 // Turn the (optional) backlight off/on
@@ -314,4 +342,8 @@ void LiquidCrystal_I2C::draw_horizontal_graph(uint8_t row, uint8_t column, uint8
 void LiquidCrystal_I2C::draw_vertical_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_row_end){}
 void LiquidCrystal_I2C::setContrast(uint8_t new_val){}
 
+void LiquidCrystal_I2C::setLogger(bool enabled,Stream *stream){
+	logger = enabled;
+	logger_stream = stream;
+}
 	
